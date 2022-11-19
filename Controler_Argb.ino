@@ -7,6 +7,7 @@
 #include <FastLED.h>
 #include <EEPROM.h>
 
+//Git hub test
 //defined (TFT 2.8 ESP8266) ======
 #define TFT_CS         4
 #define TFT_RST        0
@@ -14,7 +15,7 @@
 
 
 //defined FastLed ================
-#define DATA_PIN    15
+#define DATA_PIN    2
 #define LED_TYPE    WS2812
 #define COLOR_ORDER GRB
 #define NUM_LEDS    17
