@@ -11,10 +11,9 @@ uint8_t stepValue = 50;
 uint8_t hueValue = 0;
 
 
-void updateColor(uint8_t HexColors) { //Pro mode
+void updateColor(uint8_t HexColors) { 
   for (uint8_t i = 0 ; i < LED_COUNT; i++ ) {
     leds[i] = testHex[HexColors];
-    Serial.println(HexColors);
   }
   LEDS.show();
 }

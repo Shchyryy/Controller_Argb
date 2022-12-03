@@ -1,4 +1,5 @@
 // ================== LIBS ==================
+#include <Arduino.h>
 #include <Adafruit_GFX.h>     // Core graphics library
 #include <Adafruit_ST7735.h>  // Hardware-specific library for ST7735
 #include <Adafruit_ST7789.h>  // Hardware-specific library for ST7789
@@ -12,7 +13,6 @@
 #define TFT_RST 0
 #define TFT_DC 2
 
-
 //defined FastLed ================
 #define DATA_PIN 15
 #define LED_TYPE WS2812
@@ -22,18 +22,13 @@
 
 //defined Encoder ================
 byte STEPS = 1;
-//  #define POSMIN 0
-//  #define POSMAX 2
 #define BtnEnc 3
 
 // ================== OBJECTS ==================
-RotaryEncoder encoder(16, 5);
+RotaryEncoder encoder(16, 5, RotaryEncoder::LatchMode::FOUR3);
 // For 1.14", 1.3", 1.54", 1.69", and 2.0" TFT with ST7789:
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
-// #if !defined(ESP8266)
-//   Adafruit_ST7789(SPIClass *spiClass, TFT_CS, TFT_DC, TFT_RST);
-// #endif // end !ESP8266
 
 int lastPos = 0, newPos = 0;
 int limitPointer = 255;
@@ -116,7 +111,12 @@ float MemorBRIGHTNESS = 0;
 
 byte MemorSpeedColorEffect;
 byte MemorCountDisplayBRG;
-boolean flagTEST = true;
+
+// IRAM_ATTR void checkPosition()
+// {
+//   encoder->tick(); // just call tick() to check the state.
+// }
+
 // ================== SETUP ==================
 void setup() {
   Serial.begin(115200);
@@ -128,7 +128,6 @@ void setup() {
   tft.invertDisplay(false);
   // tft.fillScreen(ST77XX_BLACK);
   tft.setRotation(3);  //Horizontal   //1 and 3
-
 
   FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(settings.BRIGHTNESS * 2.55);
@@ -147,18 +146,12 @@ void setup() {
   analogWriteFreq(500);
   analogWriteRange(255);
   analogWrite(12, MemorCountDisplayBRG);
-  //  tft.reset();
-  // rgbcolor A = ;
-  // Serial.println();
 }
 
 // ================== LOOP ==================
 void loop() {
-  //analogWrite(12, MemorCountDisplayBRG);
-  //analogWrite(12, 150);
-  if (flagTEST) {
-    flagTEST = false;
-  }
+ 
+  Serial.println(encoder.getPosition());
 
   if (ee_request && millis() - ee_time > 3000) {
     ee_request = false;
@@ -241,56 +234,7 @@ void loop() {
 
   if (settings.IdColorMode == 1 && millis() - last_time > 50) {
     last_time = millis();
-    // switch (settings.IdOneColor) {
-    //   case 0:
-        updateColor(settings.IdOneColor);  //White   //updateColor(uint8_t r,uint8_t g,uint8_t b)
-      //  break;
-      // case 1:
-      //   updateColor(255, 0, 0);  //Red    
-      //   break;
-      // case 2:
-      //   updateColor(0, 225, 0);  //Green
-      //   break;
-      // case 3:
-      //   updateColor(0, 0, 225);  //Blue
-      //   break;
-      // case 4:
-      //   updateColor(255, 225, 225);  //White
-      //   break;
-      // case 5:
-      //   updateColor(255, 0, 0);  //Red    
-      //   break;
-      // case 6:
-      //   updateColor(0, 225, 0);  //Green
-      //   break;
-      // case 7:
-      //   updateColor(0, 0, 225);  //Blue
-      //   break;
-      // case 8:
-      //   updateColor(255, 225, 225);  //White
-      //   break;
-      // case 9:
-      //   updateColor(255, 0, 0);  //Red    
-      //   break;
-      // case 10:
-      //   updateColor(0, 225, 0);  //Green
-      //   break;
-      // case 11:
-      //   updateColor(0, 0, 225);  //Blue
-      //   break;
-      // case 12:
-      //   updateColor(255, 225, 225);  //White
-      //   break;
-      // case 13:
-      //   updateColor(255, 0, 0);  //Red    //updateColor(uint8_t r,uint8_t g,uint8_t b)
-      //   break;
-      // case 14:
-      //   updateColor(0, 225, 0);  //Green
-      //   break;
-      // case 15:
-      //   updateColor(0, 0, 225);  //Blue
-      //   break;
-    //}
+    updateColor(settings.IdOneColor);
   }
 }
 
@@ -329,8 +273,12 @@ void drawPointer(char* text, uint16_t color, int x, int y) {
 
 //Функція зчитування положення енкодера та стан його кнопки
 void EncoderRead() {
+  //  r.loop();
+  //  newPos = r.getPosition();
   encoder.tick();
   newPos = encoder.getPosition();  //призначення теперешнього положення енкодера до зміної
+
+
   //Обмеження для показника положення енкодера, POSMIN - мінімальне | POSMAX - максимальне положення
   if (newPos < POSMIN) {
     encoder.setPosition(POSMIN / STEPS);
@@ -405,6 +353,11 @@ void DisplaySleep(String state) {
     }
   }
 }
+
+// void ICACHE_RAM_ATTR encoderISR()                                            //interrupt service routines need to be in ram
+// {
+//   encoder.readAB();
+// }
 
 //Помітки =============================================================================
 //Налаштування кординат інтерфейсу
