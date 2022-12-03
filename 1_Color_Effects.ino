@@ -9,21 +9,17 @@ uint8_t bouncedirection = 0; //флаг для color_bounce()
 //uint8_t leds[LED_COUNT]; //масив для себереження випадкових значень пікселів
 uint8_t stepValue = 50;
 uint8_t hueValue = 0;
-//CHSV(ihue, saturationVal, 255);
-//if(millis()-last_time > 500)
-void updateColor(uint8_t r, uint8_t g, uint8_t b) { //Pro mode
+
+
+void updateColor(uint8_t HexColors) { //Pro mode
   for (uint8_t i = 0 ; i < LED_COUNT; i++ ) {
-    leds[i].setRGB(r, g, b);
+    leds[i] = testHex[HexColors];
+    Serial.println(HexColors);
   }
   LEDS.show();
 }
 
-//void whiteColor(){
-//  for(uint8_t i = 0 ; i < LED_COUNT; i++ ){
-//    leds[i].setRGB(100,100,100);
-//  }
-//  LEDS.show();
-//}
+
 
 //плавная смена цветов
 void rainbow_fade() {

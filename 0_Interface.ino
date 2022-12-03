@@ -105,7 +105,7 @@ void MColor () {
           settings.IdMenu = 4;
           flag = true;
           drawPointer(">", ST77XX_BLACK, 0, 50);   //void drawPointer(char *text , uint16_t color,int x, int y)
-          POSMAX = 3;
+          POSMAX = 137;
           encoder.setPosition(settings.IdOneColor);
           //newPos = IdOneColor;
         }
@@ -227,7 +227,7 @@ void MColorModeEffects() {
 void MColorModeOneColor() {
   //Setting MColorModeEffects
   POSMIN = 0;
-  POSMAX = 3;
+  POSMAX = 137;
   //===============
   if (flag) {
     flag = false;

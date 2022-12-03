@@ -1,24 +1,24 @@
 // ================== LIBS ==================
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
+#include <Adafruit_GFX.h>     // Core graphics library
+#include <Adafruit_ST7735.h>  // Hardware-specific library for ST7735
+#include <Adafruit_ST7789.h>  // Hardware-specific library for ST7789
 #include <SPI.h>
 #include "RotaryEncoder.h"
 #include <FastLED.h>
 #include <EEPROM.h>
 
 //defined (TFT 2.8 ESP8266) ======
-#define TFT_CS         4
-#define TFT_RST        0
-#define TFT_DC         2
+#define TFT_CS 4
+#define TFT_RST 0
+#define TFT_DC 2
 
 
 //defined FastLed ================
-#define DATA_PIN    15
-#define LED_TYPE    WS2812
+#define DATA_PIN 15
+#define LED_TYPE WS2812
 #define COLOR_ORDER GRB
-#define NUM_LEDS    17
-#define FRAMES_PER_SECOND  120
+#define NUM_LEDS 17
+#define FRAMES_PER_SECOND 120
 
 //defined Encoder ================
 byte STEPS = 1;
@@ -71,19 +71,46 @@ struct {
   byte CountDisplayBRG = 100;
 } settings;
 
-uint8_t MasMenu[] = {20, 60, 100}; //20/60/100/140/180|  Масив відповідальний за положення вказівника, та за переміщення по меню
-uint8_t MasColor[] = {20, 200};  //Масив відповідальний за положення вказівника, та за переміщення по під меню "Color"
-char* StrNameMode[] = {"Off", "One color", "Effects"};
+uint8_t MasMenu[] = { 20, 60, 100 };  //20/60/100/140/180|  Масив відповідальний за положення вказівника, та за переміщення по меню
+uint8_t MasColor[] = { 20, 200 };     //Масив відповідальний за положення вказівника, та за переміщення по під меню "Color"
+char* StrNameMode[] = { "Off", "One color", "Effects" };
 char* MemorNameMode = StrNameMode[settings.IdColorMode];
 
-char* StrNameEffect[] = {"rainbow_fade|", "rainbow_loop|", "random_burst|", "color_bounce|", "DontWork|", "RB_bounce|", "rainbow|"};
+char* StrNameEffect[] = { "rainbow_fade|", "rainbow_loop|", "random_burst|", "color_bounce|", "DontWork|", "RB_bounce|", "rainbow|" };
 //Масив відповідальний за назву ефектів, для подальшого виведення іх на дисплей
-char* MemorNameEffect = StrNameEffect[settings.IdColorEffects]; //Змінна для запам'ятовування назви останього ефекту
+char* MemorNameEffect = StrNameEffect[settings.IdColorEffects];  //Змінна для запам'ятовування назви останього ефекту
 
-char* StrNameOneColor[] = {"White", "Red", "Green", "Blue"};
+char* StrNameOneColor[] = {"white","red","lime","blue","yellow","cyan","magenta","silver","gray","maroon","olive","green",
+"purple","teal","navy","dark red","brown","firebrick","crimson","tomato","coral","indian red","light coral",
+"dark salmon","salmon","light salmon","orange red","dark orange","orange","gold","d golden rod","golden rod","p golden rod",
+"dark khaki","khaki","yellow green","d olive green","olive drab","lawn green","chartreuse","green yellow",
+"dark green","forest green","lime green","light green","pale green","d sea green","m spring green",
+"spring green","sea green","aqua marine","sea green","l sea green","d slate gray","dark cyan","aqua",
+"light cyan","d turquoise","turquoise","m turquoise","pale turquoise","aqua marine","powder blue","cadet blue",
+"steel blue","flower blue","deep sky blue","dodger blue","light blue","sky blue","light sky blue","midnight blue",
+"dark blue","medium blue","royal blue","blue violet","indigo","d slate blue","slate blue","m slate blue",
+"medium purple","dark magenta","dark violet","dark orchid","medium orchid","thistle","plum","violet","orchid",
+"m violet red","violet red","deep pink","hot pink","light pink","pink","antique white","beige","bisque","almond",
+"wheat","corn silk","lemon chiffon","light golden","light yellow","saddle brown","sienna","chocolate","peru","sandy brown",
+"burly wood","tan","rosy brown","moccasin","navajo white","peach puff","misty rose","lavender blush","linen","old lace","papaya whip",
+"sea shell","mint cream","slate gray","slate gray","steel blue","lavender","floral white","alice blue","ghost white",
+"honeydew","ivory","azure","snow","dim gray","dark gray ","light gray","gainsboro","white smoke"};
+
+int testHex[] = {0xFFFFFF,0xFF0000,0x00FF00,0x0000FF,0xFFFF00,0x00FFFF,0xFF00FF,0xC0C0C0,0x808080,0x800000,0x808000,0x008000,
+0x800080,0x008080,0x000080,0x8B0000,0xA52A2A,0xB22222,0xDC143C,0xFF6347,0xFF7F50,0xCD5C5C,0xF08080,0xE9967A,0xFA8072,
+0xFFA07A,0xFF4500,0xFF8C00,0xFFA500,0xFFD700,0xB8860B,0xDAA520,0xEEE8AA,0xBDB76B,0xF0E68C,0x9ACD32,0x556B2F,
+0x6B8E23,0x7CFC00,0x7FFF00,0xADFF2F,0x006400,0x228B22,0x32CD32,0x90EE90,0x98FB98,0x8FBC8F,0x00FA9A,0x00FF7F,
+0x2E8B57,0x66CDAA,0x3CB371,0x20B2AA,0x2F4F4F,0x008B8B,0x00FFFF,0x00FFFF,0xE0FFFF,0x00CED1,0x40E0D0,0x48D1CC,0xAFEEEE,
+0x7FFFD4,0xB0E0E6,0x5F9EA0,0x4682B4,0x6495ED,0x00BFFF,0x1E90FF,0xADD8E6,0x87CEEB,0x87CEFA,0x191970,0x00008B,0x0000CD,
+0x4169E1,0x8A2BE2,0x4B0082,0x483D8B,0x6A5ACD,0x7B68EE,0x9370DB,0x8B008B,0x9400D3,0x9932CC,0xBA55D3,0xD8BFD8,
+0xDDA0DD,0xEE82EE,0xDA70D6,0xC71585,0xDB7093,0xFF1493,0xFF69B4,0xFFB6C1,0xFFC0CB,0xFAEBD7,0xF5F5DC,0xFFE4C4,0xFFEBCD,
+0xF5DEB3,0xFFF8DC,0xFFFACD,0xFAFAD2,0xFFFFE0,0x8B4513,0xA0522D,0xD2691E,0xCD853F,0xF4A460,0xDEB887,0xD2B48C,0xBC8F8F,0xFFE4B5,
+0xFFDEAD,0xFFDAB9,0xFFE4E1,0xFFF0F5,0xFAF0E6,0xFDF5E60,0xFFEFD5,0xFFF5EE,0xF5FFFA,0x708090,0x778899,0xB0C4DE,0xE6E6FA,0xFFFAF0,
+0xF0F8FF,0xF8F8FF,0xF0FFF0,0xFFFFF0,0xF0FFFF,0xFFFAFA,0x696969,0xA9A9A9,0xD3D3D3,0xDCDCDC,0xF5F5F5};
+
 char* MemorNameOneColor = StrNameOneColor[settings.IdOneColor];
 
-uint8_t MasSettings[] = {20, 200};
+uint8_t MasSettings[] = { 20, 200 };
 
 float MemorBRIGHTNESS = 0;
 
@@ -96,11 +123,11 @@ void setup() {
   pinMode(BtnEnc, INPUT_PULLUP);
   encoder.setPosition(0);
   //delay(1000);
-  tft.init(240, 320,SPI_MODE2);           // Init ST7789 320x240  // if using a 2.0" 320x240 TFT
+  tft.init(240, 320, SPI_MODE2);  // Init ST7789 320x240  // if using a 2.0" 320x240 TFT
   tft.fillScreen(ST77XX_BLACK);
   tft.invertDisplay(false);
- // tft.fillScreen(ST77XX_BLACK);
-  tft.setRotation(1); //Horizontal   //1 and 3
+  // tft.fillScreen(ST77XX_BLACK);
+  tft.setRotation(3);  //Horizontal   //1 and 3
 
 
   FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
@@ -120,17 +147,19 @@ void setup() {
   analogWriteFreq(500);
   analogWriteRange(255);
   analogWrite(12, MemorCountDisplayBRG);
-//  tft.reset();
+  //  tft.reset();
+  // rgbcolor A = ;
+  // Serial.println();
 }
 
 // ================== LOOP ==================
 void loop() {
   //analogWrite(12, MemorCountDisplayBRG);
   //analogWrite(12, 150);
-  if(flagTEST){
-    flagTEST=false;
+  if (flagTEST) {
+    flagTEST = false;
   }
-  
+
   if (ee_request && millis() - ee_time > 3000) {
     ee_request = false;
     //    EEPROM.begin(Size_EEPROM);
@@ -139,32 +168,41 @@ void loop() {
     //    Serial.println("Save_settings");
   }
   //flagPassTime = true;
-//  if (flagPassTime) {
-//    TimeCount();
-//  }
+  //  if (flagPassTime) {
+  //    TimeCount();
+  //  }
 
   EncoderRead();  //Функція зчитування положення енкодера та стан його кнопки
   //drawtext("текст", колір, х кордината, y кордината, розмір тексту)
 
   //Виведення на екран інтерфейсів, кожна із ціх фунцій один із інтерфейсів
   switch (settings.IdMenu) {
-    case 0: MMenu();
+    case 0:
+      MMenu();
       break;
-    case 1: MColor();
+    case 1:
+      MColor();
       break;
-    case 2: MColorMode();
+    case 2:
+      MColorMode();
       break;
-    case 3: MColorModeEffects();
+    case 3:
+      MColorModeEffects();
       break;
-    case 4: MColorModeOneColor();
+    case 4:
+      MColorModeOneColor();
       break;
-    case 5: MColorBrightness();
+    case 5:
+      MColorBrightness();
       break;
-    case 6: SpeedColorEffect();
+    case 6:
+      SpeedColorEffect();
       break;
-    case 7: Settings();
+    case 7:
+      Settings();
       break;
-    case 8: DisplayBRG();
+    case 8:
+      DisplayBRG();
       break;
   }
 
@@ -177,41 +215,88 @@ void loop() {
   if (settings.IdColorMode == 2 && millis() - last_time > MemorSpeedColorEffect) {
     last_time = millis();
     switch (settings.IdColorEffects) {
-      case 0: rainbow_fade();
+      case 0:
+        rainbow_fade();
         break;
-      case 1: rainbow_loop();
+      case 1:
+        rainbow_loop();
         break;
-      case 2: random_burst();
+      case 2:
+        random_burst();
         break;
-      case 3: color_bounce();
+      case 3:
+        color_bounce();
         break;
-      case 4: color_bounceFADE();
+      case 4:
+        color_bounceFADE();
         break;
-      case 5: red_blue_bounce();
+      case 5:
+        red_blue_bounce();
         break;
-      case 6: rainbow();
+      case 6:
+        rainbow();
         break;
     }
   }
 
   if (settings.IdColorMode == 1 && millis() - last_time > 50) {
     last_time = millis();
-    switch (settings.IdOneColor) {
-      case 0: updateColor(255, 225, 225); //White
-        break;
-      case 1: updateColor(255, 0, 0); //Red    //updateColor(uint8_t r,uint8_t g,uint8_t b)
-        break;
-      case 2: updateColor(0, 225, 0); //Green
-        break;
-      case 3: updateColor(0, 0, 225); //Blue
-        break;
-    }
+    // switch (settings.IdOneColor) {
+    //   case 0:
+        updateColor(settings.IdOneColor);  //White   //updateColor(uint8_t r,uint8_t g,uint8_t b)
+      //  break;
+      // case 1:
+      //   updateColor(255, 0, 0);  //Red    
+      //   break;
+      // case 2:
+      //   updateColor(0, 225, 0);  //Green
+      //   break;
+      // case 3:
+      //   updateColor(0, 0, 225);  //Blue
+      //   break;
+      // case 4:
+      //   updateColor(255, 225, 225);  //White
+      //   break;
+      // case 5:
+      //   updateColor(255, 0, 0);  //Red    
+      //   break;
+      // case 6:
+      //   updateColor(0, 225, 0);  //Green
+      //   break;
+      // case 7:
+      //   updateColor(0, 0, 225);  //Blue
+      //   break;
+      // case 8:
+      //   updateColor(255, 225, 225);  //White
+      //   break;
+      // case 9:
+      //   updateColor(255, 0, 0);  //Red    
+      //   break;
+      // case 10:
+      //   updateColor(0, 225, 0);  //Green
+      //   break;
+      // case 11:
+      //   updateColor(0, 0, 225);  //Blue
+      //   break;
+      // case 12:
+      //   updateColor(255, 225, 225);  //White
+      //   break;
+      // case 13:
+      //   updateColor(255, 0, 0);  //Red    //updateColor(uint8_t r,uint8_t g,uint8_t b)
+      //   break;
+      // case 14:
+      //   updateColor(0, 225, 0);  //Green
+      //   break;
+      // case 15:
+      //   updateColor(0, 0, 225);  //Blue
+      //   break;
+    //}
   }
 }
 
 //Функція для виводу тексту на дисплей
 void drawtext(String text, uint16_t color, int x, int y) {
-  tft.setCursor(x, y); //(право,вниз)
+  tft.setCursor(x, y);  //(право,вниз)
   tft.setTextColor(color);
   tft.setTextSize(SizeText);
   tft.setTextWrap(true);
@@ -234,9 +319,9 @@ void drawPointerMas(int newPos, uint8_t Mas[]) {
   tft.print(">");
 }
 
-void drawPointer(char *text , uint16_t color, int x, int y) {
-  tft.setCursor(x, y);       //void drawPointer(char *text , uint16_t color,int x, int y)
-  tft.setTextColor(color);   //ST77XX_BLACK
+void drawPointer(char* text, uint16_t color, int x, int y) {
+  tft.setCursor(x, y);      //void drawPointer(char *text , uint16_t color,int x, int y)
+  tft.setTextColor(color);  //ST77XX_BLACK
   tft.setTextSize(SizeText);
   tft.setTextWrap(true);
   tft.print(text);
@@ -245,13 +330,12 @@ void drawPointer(char *text , uint16_t color, int x, int y) {
 //Функція зчитування положення енкодера та стан його кнопки
 void EncoderRead() {
   encoder.tick();
-  newPos = encoder.getPosition();   //призначення теперешнього положення енкодера до зміної
+  newPos = encoder.getPosition();  //призначення теперешнього положення енкодера до зміної
   //Обмеження для показника положення енкодера, POSMIN - мінімальне | POSMAX - максимальне положення
   if (newPos < POSMIN) {
     encoder.setPosition(POSMIN / STEPS);
     newPos = POSMIN;
-  }
-  else if (newPos > POSMAX) {
+  } else if (newPos > POSMAX) {
     encoder.setPosition(POSMAX / STEPS);
     newPos = POSMAX;
   }
@@ -260,17 +344,17 @@ void EncoderRead() {
     //Serial.println(newPos);
     lastPos = newPos;
     flagPassTime = true;
-    flag = true; //Виконує роль шлюзу у фунції виведення інтерфейсів,
+    flag = true;  //Виконує роль шлюзу у фунції виведення інтерфейсів,
     //при перемиканні енкодера виконуються відкриття шлюзу, що забеспечує
     //однаразове оновлення інформації на дисплеї
-//    if (Sec == 1)Sec = 0;
-//    if (Sec == 10) {
-//      //Sec = 0;
-//      DisplaySleep("ON");
-//      flagPassTime = true;
-//    }
-//     Sec = 0;
-//     flagPassTime = false;
+    //    if (Sec == 1)Sec = 0;
+    //    if (Sec == 10) {
+    //      //Sec = 0;
+    //      DisplaySleep("ON");
+    //      flagPassTime = true;
+    //    }
+    //     Sec = 0;
+    //     flagPassTime = false;
   }
 
   btn = !digitalRead(BtnEnc);  //Зчитування стану конопки енкодера
