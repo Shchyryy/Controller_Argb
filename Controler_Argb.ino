@@ -7,6 +7,10 @@
 #include "RotaryEncoder.h"
 #include <FastLED.h>
 #include <EEPROM.h>
+#include "colorutils.h"
+#include "colorpalettes.h"
+#include "string.h"
+#include <pixeltypes.h>
 
 //defined (TFT 2.8 ESP8266) ======
 #define TFT_CS 4
@@ -17,7 +21,9 @@
 #define DATA_PIN 15
 #define LED_TYPE WS2812
 #define COLOR_ORDER GRB
-#define NUM_LEDS 17
+#define NUM_STRIPS 3
+#define NUM_LEDS_PER_STRIP 16
+#define NUM_LEDS NUM_LEDS_PER_STRIP* NUM_STRIPS
 #define FRAMES_PER_SECOND 120
 
 //defined Encoder ================
@@ -57,12 +63,12 @@ byte Size_EEPROM = 6;
 int Sec;
 
 struct {
-  byte IdMenu = 0;
-  byte IdColorMode = 0;
+  byte IdMenu = 1;
+  byte IdColorMode = 2;
   byte IdColorEffects = 0;
   byte IdOneColor = 0;
   byte BRIGHTNESS = 70;
-  byte speedColorEffect = 50;
+  byte speedColorEffect = 80;
   byte CountDisplayBRG = 100;
 } settings;
 
@@ -71,37 +77,40 @@ uint8_t MasColor[] = { 20, 200 };     //Масив відповідальний 
 char* StrNameMode[] = { "Off", "One color", "Effects" };
 char* MemorNameMode = StrNameMode[settings.IdColorMode];
 
-char* StrNameEffect[] = { "rainbow_fade|", "rainbow_loop|", "random_burst|", "color_bounce|", "DontWork|", "RB_bounce|", "rainbow|" };
+char* StrNameEffect[] = { "rainbow_fade|", "rainbow|", "rainbow2|", "rainbow_loop|", "random_burst|", "rainbowSC|", "partyColors|",
+                          "Pastel|", "HeatColors|", "Slava Ukraini|", "Kavun baza|", "ForestColors|", "OceanColors|", "NOBLEND_P|", "LavaColors|", "CloudColors|", "BMR|", "BMR2|", "BMR3|",
+                          "Winter|","Spring|","Summer|","Fall|","Coffe1|","Coffe2|","Nature1|","Nature2|","Dark1|","Dark2|","Dark3|","Dark4|","Neon1|","Neon2|","Neon3|","Retro1|","Retro2|",
+                          "Retro3|","Retro4|","Retro5|","Retro6|" };
 //Масив відповідальний за назву ефектів, для подальшого виведення іх на дисплей
 char* MemorNameEffect = StrNameEffect[settings.IdColorEffects];  //Змінна для запам'ятовування назви останього ефекту
 
-char* StrNameOneColor[] = {"white","red","lime","blue","yellow","cyan","magenta","silver","gray","maroon","olive","green",
-"purple","teal","navy","dark red","brown","firebrick","crimson","tomato","coral","indian red","light coral",
-"dark salmon","salmon","light salmon","orange red","dark orange","orange","gold","d golden rod","golden rod","p golden rod",
-"dark khaki","khaki","yellow green","d olive green","olive drab","lawn green","chartreuse","green yellow",
-"dark green","forest green","lime green","light green","pale green","d sea green","m spring green",
-"spring green","sea green","aqua marine","sea green","l sea green","d slate gray","dark cyan","aqua",
-"light cyan","d turquoise","turquoise","m turquoise","pale turquoise","aqua marine","powder blue","cadet blue",
-"steel blue","flower blue","deep sky blue","dodger blue","light blue","sky blue","light sky blue","midnight blue",
-"dark blue","medium blue","royal blue","blue violet","indigo","d slate blue","slate blue","m slate blue",
-"medium purple","dark magenta","dark violet","dark orchid","medium orchid","thistle","plum","violet","orchid",
-"m violet red","violet red","deep pink","hot pink","light pink","pink","antique white","beige","bisque","almond",
-"wheat","corn silk","lemon chiffon","light golden","light yellow","saddle brown","sienna","chocolate","peru","sandy brown",
-"burly wood","tan","rosy brown","moccasin","navajo white","peach puff","misty rose","lavender blush","linen","old lace","papaya whip",
-"sea shell","mint cream","slate gray","slate gray","steel blue","lavender","floral white","alice blue","ghost white",
-"honeydew","ivory","azure","snow","dim gray","dark gray ","light gray","gainsboro","white smoke"};
+char* StrNameOneColor[] = { "white", "red", "lime", "blue", "yellow", "cyan", "magenta", "silver", "gray", "maroon", "olive", "green",
+                            "purple", "teal", "navy", "dark red", "brown", "firebrick", "crimson", "tomato", "coral", "indian red", "light coral",
+                            "dark salmon", "salmon", "light salmon", "orange red", "dark orange", "orange", "gold", "d golden rod", "golden rod", "p golden rod",
+                            "dark khaki", "khaki", "yellow green", "d olive green", "olive drab", "lawn green", "chartreuse", "green yellow",
+                            "dark green", "forest green", "lime green", "light green", "pale green", "d sea green", "m spring green",
+                            "spring green", "sea green", "aqua marine", "sea green", "l sea green", "d slate gray", "dark cyan", "aqua",
+                            "light cyan", "d turquoise", "turquoise", "m turquoise", "pale turquoise", "aqua marine", "powder blue", "cadet blue",
+                            "steel blue", "flower blue", "deep sky blue", "dodger blue", "light blue", "sky blue", "light sky blue", "midnight blue",
+                            "dark blue", "medium blue", "royal blue", "blue violet", "indigo", "d slate blue", "slate blue", "m slate blue",
+                            "medium purple", "dark magenta", "dark violet", "dark orchid", "medium orchid", "thistle", "plum", "violet", "orchid",
+                            "m violet red", "violet red", "deep pink", "hot pink", "light pink", "pink", "antique white", "beige", "bisque", "almond",
+                            "wheat", "corn silk", "lemon chiffon", "light golden", "light yellow", "saddle brown", "sienna", "chocolate", "peru", "sandy brown",
+                            "burly wood", "tan", "rosy brown", "moccasin", "navajo white", "peach puff", "misty rose", "lavender blush", "linen", "old lace", "papaya whip",
+                            "sea shell", "mint cream", "slate gray", "slate gray", "steel blue", "lavender", "floral white", "alice blue", "ghost white",
+                            "honeydew", "ivory", "azure", "snow", "dim gray", "dark gray ", "light gray", "gainsboro", "white smoke" };
 
-int testHex[] = {0xFFFFFF,0xFF0000,0x00FF00,0x0000FF,0xFFFF00,0x00FFFF,0xFF00FF,0xC0C0C0,0x808080,0x800000,0x808000,0x008000,
-0x800080,0x008080,0x000080,0x8B0000,0xA52A2A,0xB22222,0xDC143C,0xFF6347,0xFF7F50,0xCD5C5C,0xF08080,0xE9967A,0xFA8072,
-0xFFA07A,0xFF4500,0xFF8C00,0xFFA500,0xFFD700,0xB8860B,0xDAA520,0xEEE8AA,0xBDB76B,0xF0E68C,0x9ACD32,0x556B2F,
-0x6B8E23,0x7CFC00,0x7FFF00,0xADFF2F,0x006400,0x228B22,0x32CD32,0x90EE90,0x98FB98,0x8FBC8F,0x00FA9A,0x00FF7F,
-0x2E8B57,0x66CDAA,0x3CB371,0x20B2AA,0x2F4F4F,0x008B8B,0x00FFFF,0x00FFFF,0xE0FFFF,0x00CED1,0x40E0D0,0x48D1CC,0xAFEEEE,
-0x7FFFD4,0xB0E0E6,0x5F9EA0,0x4682B4,0x6495ED,0x00BFFF,0x1E90FF,0xADD8E6,0x87CEEB,0x87CEFA,0x191970,0x00008B,0x0000CD,
-0x4169E1,0x8A2BE2,0x4B0082,0x483D8B,0x6A5ACD,0x7B68EE,0x9370DB,0x8B008B,0x9400D3,0x9932CC,0xBA55D3,0xD8BFD8,
-0xDDA0DD,0xEE82EE,0xDA70D6,0xC71585,0xDB7093,0xFF1493,0xFF69B4,0xFFB6C1,0xFFC0CB,0xFAEBD7,0xF5F5DC,0xFFE4C4,0xFFEBCD,
-0xF5DEB3,0xFFF8DC,0xFFFACD,0xFAFAD2,0xFFFFE0,0x8B4513,0xA0522D,0xD2691E,0xCD853F,0xF4A460,0xDEB887,0xD2B48C,0xBC8F8F,0xFFE4B5,
-0xFFDEAD,0xFFDAB9,0xFFE4E1,0xFFF0F5,0xFAF0E6,0xFDF5E60,0xFFEFD5,0xFFF5EE,0xF5FFFA,0x708090,0x778899,0xB0C4DE,0xE6E6FA,0xFFFAF0,
-0xF0F8FF,0xF8F8FF,0xF0FFF0,0xFFFFF0,0xF0FFFF,0xFFFAFA,0x696969,0xA9A9A9,0xD3D3D3,0xDCDCDC,0xF5F5F5};
+int testHex[] = { 0xFFFFFF, 0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0x00FFFF, 0xFF00FF, 0xC0C0C0, 0x808080, 0x800000, 0x808000, 0x008000,
+                  0x800080, 0x008080, 0x000080, 0x8B0000, 0xA52A2A, 0xB22222, 0xDC143C, 0xFF6347, 0xFF7F50, 0xCD5C5C, 0xF08080, 0xE9967A, 0xFA8072,
+                  0xFFA07A, 0xFF4500, 0xFF8C00, 0xFFA500, 0xFFD700, 0xB8860B, 0xDAA520, 0xEEE8AA, 0xBDB76B, 0xF0E68C, 0x9ACD32, 0x556B2F,
+                  0x6B8E23, 0x7CFC00, 0x7FFF00, 0xADFF2F, 0x006400, 0x228B22, 0x32CD32, 0x90EE90, 0x98FB98, 0x8FBC8F, 0x00FA9A, 0x00FF7F,
+                  0x2E8B57, 0x66CDAA, 0x3CB371, 0x20B2AA, 0x2F4F4F, 0x008B8B, 0x00FFFF, 0x00FFFF, 0xE0FFFF, 0x00CED1, 0x40E0D0, 0x48D1CC, 0xAFEEEE,
+                  0x7FFFD4, 0xB0E0E6, 0x5F9EA0, 0x4682B4, 0x6495ED, 0x00BFFF, 0x1E90FF, 0xADD8E6, 0x87CEEB, 0x87CEFA, 0x191970, 0x00008B, 0x0000CD,
+                  0x4169E1, 0x8A2BE2, 0x4B0082, 0x483D8B, 0x6A5ACD, 0x7B68EE, 0x9370DB, 0x8B008B, 0x9400D3, 0x9932CC, 0xBA55D3, 0xD8BFD8,
+                  0xDDA0DD, 0xEE82EE, 0xDA70D6, 0xC71585, 0xDB7093, 0xFF1493, 0xFF69B4, 0xFFB6C1, 0xFFC0CB, 0xFAEBD7, 0xF5F5DC, 0xFFE4C4, 0xFFEBCD,
+                  0xF5DEB3, 0xFFF8DC, 0xFFFACD, 0xFAFAD2, 0xFFFFE0, 0x8B4513, 0xA0522D, 0xD2691E, 0xCD853F, 0xF4A460, 0xDEB887, 0xD2B48C, 0xBC8F8F, 0xFFE4B5,
+                  0xFFDEAD, 0xFFDAB9, 0xFFE4E1, 0xFFF0F5, 0xFAF0E6, 0xFDF5E60, 0xFFEFD5, 0xFFF5EE, 0xF5FFFA, 0x708090, 0x778899, 0xB0C4DE, 0xE6E6FA, 0xFFFAF0,
+                  0xF0F8FF, 0xF8F8FF, 0xF0FFF0, 0xFFFFF0, 0xF0FFFF, 0xFFFAFA, 0x696969, 0xA9A9A9, 0xD3D3D3, 0xDCDCDC, 0xF5F5F5 };
 
 char* MemorNameOneColor = StrNameOneColor[settings.IdOneColor];
 
@@ -112,10 +121,14 @@ float MemorBRIGHTNESS = 0;
 byte MemorSpeedColorEffect;
 byte MemorCountDisplayBRG;
 
+static uint8_t startIndex = 0;
+
 // IRAM_ATTR void checkPosition()
 // {
 //   encoder->tick(); // just call tick() to check the state.
 // }
+CRGB leds2[NUM_LEDS];
+CRGB leds3[NUM_LEDS];
 
 // ================== SETUP ==================
 void setup() {
@@ -150,8 +163,8 @@ void setup() {
 
 // ================== LOOP ==================
 void loop() {
- 
-  Serial.println(encoder.getPosition());
+
+  //Serial.println(encoder.getPosition());
 
   if (ee_request && millis() - ee_time > 3000) {
     ee_request = false;
@@ -207,29 +220,131 @@ void loop() {
   //Виведення світлових ефектів. Зроблена спільна затримка, яка відповідаю за швидкість відтворення ефектів
   if (settings.IdColorMode == 2 && millis() - last_time > MemorSpeedColorEffect) {
     last_time = millis();
+    startIndex = startIndex + 1;
     switch (settings.IdColorEffects) {
       case 0:
         rainbow_fade();
+        //defTest();
         break;
       case 1:
-        rainbow_loop();
-        break;
-      case 2:
-        random_burst();
-        break;
-      case 3:
-        color_bounce();
-        break;
-      case 4:
-        color_bounceFADE();
-        break;
-      case 5:
-        red_blue_bounce();
-        break;
-      case 6:
         rainbow();
         break;
+      case 2:
+        rainbow2();
+        break;
+      case 3:
+        rainbow_loop();
+        break;
+      case 4:
+        random_burst();
+        break;
+      case 5:
+        rainbowSC();
+        break;
+      case 6:
+        partyColors();
+        break;
+      case 7:
+        MyColors();
+        break;
+      case 8:
+        HeatColors();
+        break;
+      case 9:
+        SlavaUkraini();
+        break;
+      case 10:
+        Watermelon();
+        break;
+      case 11:
+        ForestColors();
+        break;
+      case 12:
+        OceanColors();
+        break;
+      case 13:
+        NOBLEND_P();
+        break;
+      case 14:
+        LavaColors();
+        break;
+      case 15:
+        CloudColors();
+        break;
+      case 16:
+        BMR();
+        break;
+      case 17:
+        BMR2();
+        break;
+      case 18:
+        BMR3();
+        break;
+      case 19:
+        Winter();
+        break;
+      case 20:
+        Spring();
+        break;
+      case 21:
+        Summer();
+        break;
+      case 22:
+        Fall();
+        break;
+      case 23:
+        Coffe1();
+        break;
+      case 24:
+        Coffe2();
+        break;
+      case 25:
+        Nature1();
+        break;
+      case 26:
+        Nature2();
+        break;
+      case 27:
+        Dark1();
+        break;
+      case 28:
+        Dark2();
+        break;
+      case 29:
+        Dark3();
+        break;
+      case 30:
+        Dark4();
+        break;
+      case 31:
+        Neon1();
+        break;
+      case 32:
+        Neon2();
+        break;
+      case 33:
+        Neon3();
+        break;
+      case 34:
+        Retro1();
+        break;
+      case 35:
+        Retro2();
+        break;
+      case 36:
+        Retro3();
+        break;
+      case 37:
+        Retro4();
+        break;
+      case 38:
+        Retro5();
+        break;
+      case 39:
+        Retro6();
+        break;
     }
+    LEDS.show();
   }
 
   if (settings.IdColorMode == 1 && millis() - last_time > 50) {
