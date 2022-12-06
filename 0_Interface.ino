@@ -149,7 +149,7 @@ void MColorMode() {
   //===============
   if (flag) {
     flag = false;
-    drawPointer("<", ST77XX_WHITE , 300 , 20);
+    drawPointer("<", ST77XX_WHITE , 295 , 20);
 
     settings.IdColorMode = newPos;
     if (MemorNameMode != StrNameMode[settings.IdColorMode]) {
@@ -186,7 +186,7 @@ void MColorMode() {
 
   if (PassFlag) {
     encoder.setPosition(0);
-    drawPointer("<", ST77XX_BLACK , 300, 20);
+    drawPointer("<", ST77XX_BLACK , 295, 20);
     drawPointer(">", ST77XX_WHITE , 0, 20);
     settings.IdMenu = 1;
     PassFlag = 0;
@@ -203,7 +203,7 @@ void MColorModeEffects() {
   //===============
   if (flag) {
     flag = false;
-    drawPointer("<", ST77XX_WHITE , 300, 50);
+    drawPointer("<", ST77XX_WHITE , 295, 50);
     settings.IdColorEffects = newPos;
     if (MemorNameEffect != StrNameEffect[settings.IdColorEffects]) {
       drawtext(MemorNameEffect, ST77XX_BLACK, 40, 50);
@@ -214,7 +214,7 @@ void MColorModeEffects() {
 
   if (PassFlag) {
     encoder.setPosition(1);
-    drawPointer("<", ST77XX_BLACK , 300, 50);
+    drawPointer("<", ST77XX_BLACK , 295, 50);
     drawPointer(">", ST77XX_WHITE , 0, 50);
     settings.IdMenu = 1;
     PassFlag = 0;
@@ -231,7 +231,7 @@ void MColorModeOneColor() {
   //===============
   if (flag) {
     flag = false;
-    drawPointer("<", ST77XX_WHITE , 300, 50);
+    drawPointer("<", ST77XX_WHITE , 295, 50);
     settings.IdOneColor = newPos;
     if (MemorNameOneColor != StrNameOneColor[settings.IdOneColor]) {
       drawtext(MemorNameOneColor, ST77XX_BLACK, 40, 50);
@@ -242,7 +242,7 @@ void MColorModeOneColor() {
 
   if (PassFlag) {
     encoder.setPosition(1);
-    drawPointer("<", ST77XX_BLACK , 300, 50);
+    drawPointer("<", ST77XX_BLACK , 295, 50);
     drawPointer(">", ST77XX_WHITE , 0, 50);
     settings.IdMenu = 1;
     PassFlag = 0;
@@ -258,7 +258,7 @@ void MColorBrightness() {
   //===============
   if (flag) {
     flag = false;
-    drawPointer("<", ST77XX_WHITE , 300, 100);
+    drawPointer("<", ST77XX_WHITE , 295, 100);
 
     //    MemorBRIGHTNESS  //
     if (settings.BRIGHTNESS != newPos) {
@@ -275,7 +275,7 @@ void MColorBrightness() {
 
   if (PassFlag) {
     encoder.setPosition(2);
-    drawPointer("<", ST77XX_BLACK , 300, 100);
+    drawPointer("<", ST77XX_BLACK , 295, 100);
     drawPointer(">", ST77XX_WHITE , 0, 100);
     settings.IdMenu = 1;
     PassFlag = 0;
@@ -292,7 +292,7 @@ void SpeedColorEffect() {
   //===============
   if (flag) {
     flag = false;
-    drawPointer("<", ST77XX_WHITE , 300, 140);
+    drawPointer("<", ST77XX_WHITE , 295, 140);
 
     if (settings.speedColorEffect != newPos) {
       drawtext((String)settings.speedColorEffect, ST77XX_BLACK, 228, 140);
@@ -306,7 +306,7 @@ void SpeedColorEffect() {
 
   if (PassFlag) {
     encoder.setPosition(3);
-    drawPointer("<", ST77XX_BLACK , 300, 140);
+    drawPointer("<", ST77XX_BLACK , 295, 140);
     drawPointer(">", ST77XX_WHITE , 0, 140);
     settings.IdMenu = 1;
     PassFlag = 0;
@@ -357,7 +357,7 @@ void DisplayBRG() {
   //===============
   if (flag) {
     flag = false;
-    drawPointer("<", ST77XX_WHITE , 300, 20);
+    drawPointer("<", ST77XX_WHITE , 295, 20);
 
     if (settings.CountDisplayBRG != newPos) {
       drawtext((String)settings.CountDisplayBRG, ST77XX_BLACK, 228, 20);
@@ -365,7 +365,7 @@ void DisplayBRG() {
       settings.CountDisplayBRG = settings.CountDisplayBRG * 10;
       drawtext((String)settings.CountDisplayBRG, ST77XX_WHITE, 228, 20);
       MemorCountDisplayBRG = settings.CountDisplayBRG * 2.55;
-      analogWrite(12, MemorCountDisplayBRG);
+      analogWrite(LedDisplay, MemorCountDisplayBRG);
       Serial.println(MemorCountDisplayBRG);
     }
   }
@@ -373,7 +373,7 @@ void DisplayBRG() {
   if (PassFlag) {
     POSMIN = 0;
     encoder.setPosition(0);
-    drawPointer("<", ST77XX_BLACK , 300, 20);
+    drawPointer("<", ST77XX_BLACK , 295, 20);
     drawPointer(">", ST77XX_WHITE , 0, 20);
     settings.IdMenu = 7;
     PassFlag = 0;

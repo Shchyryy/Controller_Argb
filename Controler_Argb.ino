@@ -29,6 +29,7 @@
 //defined Encoder ================
 byte STEPS = 1;
 #define BtnEnc 3
+#define LedDisplay 12
 
 // ================== OBJECTS ==================
 RotaryEncoder encoder(16, 5, RotaryEncoder::LatchMode::FOUR3);
@@ -67,7 +68,7 @@ struct {
   byte IdColorMode = 2;
   byte IdColorEffects = 0;
   byte IdOneColor = 0;
-  byte BRIGHTNESS = 70;
+  byte BRIGHTNESS = 80;
   byte speedColorEffect = 80;
   byte CountDisplayBRG = 100;
 } settings;
@@ -79,8 +80,8 @@ char* MemorNameMode = StrNameMode[settings.IdColorMode];
 
 char* StrNameEffect[] = { "rainbow_fade|", "rainbow|", "rainbow2|", "rainbow_loop|", "random_burst|", "rainbowSC|", "partyColors|",
                           "Pastel|", "HeatColors|", "Slava Ukraini|", "Kavun baza|", "ForestColors|", "OceanColors|", "NOBLEND_P|", "LavaColors|", "CloudColors|", "BMR|", "BMR2|", "BMR3|",
-                          "Winter|","Spring|","Summer|","Fall|","Coffe1|","Coffe2|","Nature1|","Nature2|","Dark1|","Dark2|","Dark3|","Dark4|","Neon1|","Neon2|","Neon3|","Retro1|","Retro2|",
-                          "Retro3|","Retro4|","Retro5|","Retro6|" };
+                          "Winter|", "Spring|", "Summer|", "Fall|", "Coffe1|", "Coffe2|", "Nature1|", "Nature2|", "Dark1|", "Dark2|", "Dark3|", "Dark4|", "Neon1|", "Neon2|", "Neon3|", "Retro1|", "Retro2|",
+                          "Retro3|", "Retro4|", "Retro5|", "Retro6|" };
 //Масив відповідальний за назву ефектів, для подальшого виведення іх на дисплей
 char* MemorNameEffect = StrNameEffect[settings.IdColorEffects];  //Змінна для запам'ятовування назви останього ефекту
 
@@ -90,7 +91,7 @@ char* StrNameOneColor[] = { "white", "red", "lime", "blue", "yellow", "cyan", "m
                             "dark khaki", "khaki", "yellow green", "d olive green", "olive drab", "lawn green", "chartreuse", "green yellow",
                             "dark green", "forest green", "lime green", "light green", "pale green", "d sea green", "m spring green",
                             "spring green", "sea green", "aqua marine", "sea green", "l sea green", "d slate gray", "dark cyan", "aqua",
-                            "light cyan", "d turquoise", "turquoise", "m turquoise", "pale turquoise", "aqua marine", "powder blue", "cadet blue",
+                            "light cyan", "d turquoise", "turquoise", "m turquoise", "p turquoise", "aqua marine", "powder blue", "cadet blue",
                             "steel blue", "flower blue", "deep sky blue", "dodger blue", "light blue", "sky blue", "light sky blue", "midnight blue",
                             "dark blue", "medium blue", "royal blue", "blue violet", "indigo", "d slate blue", "slate blue", "m slate blue",
                             "medium purple", "dark magenta", "dark violet", "dark orchid", "medium orchid", "thistle", "plum", "violet", "orchid",
@@ -123,17 +124,16 @@ byte MemorCountDisplayBRG;
 
 static uint8_t startIndex = 0;
 
-// IRAM_ATTR void checkPosition()
-// {
-//   encoder->tick(); // just call tick() to check the state.
-// }
 CRGB leds2[NUM_LEDS];
 CRGB leds3[NUM_LEDS];
+
+int i = 0;
 
 // ================== SETUP ==================
 void setup() {
   Serial.begin(115200);
   pinMode(BtnEnc, INPUT_PULLUP);
+  pinMode(LedDisplay, OUTPUT);
   encoder.setPosition(0);
   //delay(1000);
   tft.init(240, 320, SPI_MODE2);  // Init ST7789 320x240  // if using a 2.0" 320x240 TFT
@@ -143,7 +143,6 @@ void setup() {
   tft.setRotation(3);  //Horizontal   //1 and 3
 
   FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.setBrightness(settings.BRIGHTNESS * 2.55);
   flagPassColorMode = true;
 
   //  EEPROM.begin(Size_EEPROM);
@@ -152,13 +151,18 @@ void setup() {
   MemorSpeedColorEffect = 100 - settings.speedColorEffect;
   MemorBRIGHTNESS = settings.BRIGHTNESS * 2.55;
   MemorCountDisplayBRG = settings.CountDisplayBRG * 2.55;
-  FastLED.setBrightness(MemorBRIGHTNESS);
+  //FastLED.setBrightness(MemorBRIGHTNESS);
   MemorNameMode = StrNameMode[settings.IdColorMode];
   MemorNameEffect = StrNameEffect[settings.IdColorEffects];
   MemorNameOneColor = StrNameOneColor[settings.IdOneColor];
   analogWriteFreq(500);
   analogWriteRange(255);
-  analogWrite(12, MemorCountDisplayBRG);
+  //analogWrite(LedDisplay, MemorCountDisplayBRG);
+
+  // for (int i = 0; i <= MemorCountDisplayBRG; i++) {
+  //   Serial.println(i);
+  //   analogWrite(LedDisplay, i);
+  // }
 }
 
 // ================== LOOP ==================
@@ -173,10 +177,6 @@ void loop() {
     //    EEPROM.end();
     //    Serial.println("Save_settings");
   }
-  //flagPassTime = true;
-  //  if (flagPassTime) {
-  //    TimeCount();
-  //  }
 
   EncoderRead();  //Функція зчитування положення енкодера та стан його кнопки
   //drawtext("текст", колір, х кордината, y кордината, розмір тексту)
@@ -351,7 +351,25 @@ void loop() {
     last_time = millis();
     updateColor(settings.IdOneColor);
   }
+
+//Плане включення підсвітки та дисплею
+  if (flagPassTime && millis() - time_work > 5) {
+    time_work = millis();
+    if (i <= MemorCountDisplayBRG) {
+      analogWrite(LedDisplay, i);
+    }
+    if (i <= MemorBRIGHTNESS) {
+      FastLED.setBrightness(i);
+      Serial.println(i);
+    }
+    if (i == 255) {
+      Serial.print("ok");
+      flagPassTime = false;
+    }
+    i++;
+  }
 }
+
 
 //Функція для виводу тексту на дисплей
 void drawtext(String text, uint16_t color, int x, int y) {
