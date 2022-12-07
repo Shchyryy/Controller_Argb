@@ -56,6 +56,7 @@ byte POSMAX = 0;
 
 unsigned long last_time;
 unsigned long time_work;
+unsigned long testTm;
 
 unsigned long ee_time;
 boolean ee_request = false;
@@ -64,8 +65,8 @@ byte Size_EEPROM = 6;
 int Sec;
 
 struct {
-  byte IdMenu = 1;
-  byte IdColorMode = 2;
+  byte IdMenu = 0;
+  byte IdColorMode = 0;
   byte IdColorEffects = 0;
   byte IdOneColor = 0;
   byte BRIGHTNESS = 80;
@@ -73,8 +74,8 @@ struct {
   byte CountDisplayBRG = 100;
 } settings;
 
-uint8_t MasMenu[] = { 20, 60, 100 };  //20/60/100/140/180|  Масив відповідальний за положення вказівника, та за переміщення по меню
-uint8_t MasColor[] = { 20, 200 };     //Масив відповідальний за положення вказівника, та за переміщення по під меню "Color"
+uint8_t MasMenu[] = { 90, 120, 100 };  //20/60/100/140/180|  Масив відповідальний за положення вказівника, та за переміщення по меню
+uint8_t MasColor[] = { 20, 200 };      //Масив відповідальний за положення вказівника, та за переміщення по під меню "Color"
 char* StrNameMode[] = { "Off", "One color", "Effects" };
 char* MemorNameMode = StrNameMode[settings.IdColorMode];
 
@@ -115,7 +116,7 @@ int testHex[] = { 0xFFFFFF, 0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0x00FFFF, 0x
 
 char* MemorNameOneColor = StrNameOneColor[settings.IdOneColor];
 
-uint8_t MasSettings[] = { 20, 200 };
+uint8_t MasSettings[] = { 20, 60, 100, 140, 200 };
 
 float MemorBRIGHTNESS = 0;
 
@@ -145,7 +146,7 @@ void setup() {
   FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   flagPassColorMode = true;
 
-  //  EEPROM.begin(Size_EEPROM);
+  //  EEPROM.begin(Size_EEPROM); здається для скидання попередніх налаштувань
   //  EEPROM.get(1, settings);
   //  EEPROM.end();
   MemorSpeedColorEffect = 100 - settings.speedColorEffect;
@@ -169,9 +170,11 @@ void setup() {
 void loop() {
 
   //Serial.println(encoder.getPosition());
+  // TimeCount();
+  // SleepDisplay();
 
   if (ee_request && millis() - ee_time > 3000) {
-    ee_request = false;
+    // ee_request = false;
     //    EEPROM.begin(Size_EEPROM);
     //    EEPROM.put(1, settings);
     //    EEPROM.end();
@@ -209,6 +212,9 @@ void loop() {
       break;
     case 8:
       DisplayBRG();
+      break;
+    case 9:
+      AutohorMenu();
       break;
   }
 
@@ -352,7 +358,7 @@ void loop() {
     updateColor(settings.IdOneColor);
   }
 
-//Плане включення підсвітки та дисплею
+  //Плане включення підсвітки та дисплею
   if (flagPassTime && millis() - time_work > 5) {
     time_work = millis();
     if (i <= MemorCountDisplayBRG) {
@@ -360,11 +366,10 @@ void loop() {
     }
     if (i <= MemorBRIGHTNESS) {
       FastLED.setBrightness(i);
-      Serial.println(i);
     }
     if (i == 255) {
-      Serial.print("ok");
       flagPassTime = false;
+      //i = 0;
     }
     i++;
   }
@@ -372,23 +377,23 @@ void loop() {
 
 
 //Функція для виводу тексту на дисплей
-void drawtext(String text, uint16_t color, int x, int y) {
+void drawtext(String text, uint16_t color, int x, int y, byte size = SizeText) {
   tft.setCursor(x, y);  //(право,вниз)
   tft.setTextColor(color);
-  tft.setTextSize(SizeText);
+  tft.setTextSize(size);
   tft.setTextWrap(true);
   tft.print(text);
 }
 //Функція для виводу вказівника на дисплей
-void drawPointerMas(int newPos, uint8_t Mas[]) {
+void drawPointerMas(int newPos, uint8_t Mas[], int y = 0) {
   if (memor != Mas[newPos]) {
-    tft.setCursor(0, memor);
+    tft.setCursor(y, memor);
     tft.setTextColor(ST77XX_BLACK);
     tft.setTextSize(SizeText);
     tft.setTextWrap(true);
     tft.print(">");
   }
-  tft.setCursor(0, Mas[newPos]);
+  tft.setCursor(y, Mas[newPos]);
   memor = Mas[newPos];
   tft.setTextColor(ST77XX_WHITE);
   tft.setTextSize(SizeText);
@@ -396,60 +401,60 @@ void drawPointerMas(int newPos, uint8_t Mas[]) {
   tft.print(">");
 }
 
-void drawPointer(char* text, uint16_t color, int x, int y) {
+void drawPointer(char* text, uint16_t color, int x, int y, byte size = SizeText) {
   tft.setCursor(x, y);      //void drawPointer(char *text , uint16_t color,int x, int y)
   tft.setTextColor(color);  //ST77XX_BLACK
-  tft.setTextSize(SizeText);
+  tft.setTextSize(size);
   tft.setTextWrap(true);
   tft.print(text);
 }
 
 //Функція зчитування положення енкодера та стан його кнопки
+// int n;
+// int m;
 void EncoderRead() {
   //  r.loop();
   //  newPos = r.getPosition();
   encoder.tick();
   newPos = encoder.getPosition();  //призначення теперешнього положення енкодера до зміної
-
+  //n = Sec;
+  //millis() - testTm > 1000
 
   //Обмеження для показника положення енкодера, POSMIN - мінімальне | POSMAX - максимальне положення
   if (newPos < POSMIN) {
     encoder.setPosition(POSMIN / STEPS);
     newPos = POSMIN;
+    //UnSleepDisplay();
   } else if (newPos > POSMAX) {
     encoder.setPosition(POSMAX / STEPS);
     newPos = POSMAX;
+    //UnSleepDisplay();
   }
   //Виведення позиції енкодера в serial port
   if (lastPos != newPos) {
     //Serial.println(newPos);
+    //UnSleepDisplay();
     lastPos = newPos;
     flagPassTime = true;
     flag = true;  //Виконує роль шлюзу у фунції виведення інтерфейсів,
     //при перемиканні енкодера виконуються відкриття шлюзу, що забеспечує
     //однаразове оновлення інформації на дисплеї
-    //    if (Sec == 1)Sec = 0;
-    //    if (Sec == 10) {
-    //      //Sec = 0;
-    //      DisplaySleep("ON");
-    //      flagPassTime = true;
-    //    }
-    //     Sec = 0;
-    //     flagPassTime = false;
   }
 
   btn = !digitalRead(BtnEnc);  //Зчитування стану конопки енкодера
   //Блок відповідальний за однаразове спрацьовування дії при змінні стану кнопки
+
   if (btn == 1 && btnFlag == 0) {
     btnFlag = 1;
     Serial.println("Click");
+    //UnSleepDisplay();
   }
   if (btn == 0 && btnFlag == 1) {
     btnFlag = 0;
     PassFlag = 1;  ////Виконує роль шлюзу у фунції виведення інтерфейсів,
     //при змінні стану кнопки енкодеру (*не плутати із flag) виконуються відкриття шлюзу, що забеспечує
     //однаразове оновлення інформації на дисплеї
-    Serial.println("ok");
+    time_work = 0;
   }
 }
 
@@ -459,38 +464,31 @@ void SaveSettings() {
   //Serial.println("ok");
 }
 
+// void SleepDisplay() {    на кращі часи
+//   if (Sec - n >= 10) {
+//     if (MemorCountDisplayBRG > 0) {
+//       MemorCountDisplayBRG--;
+//       analogWrite(LedDisplay, MemorCountDisplayBRG);
+//       Serial.println(MemorCountDisplayBRG);
+//     }
+//   }
+// }
+
+// void UnSleepDisplay() {   конфліктує із налаштуванням яскравості
+//   n = Sec;
+//   MemorCountDisplayBRG = ;
+//   analogWrite(LedDisplay, MemorCountDisplayBRG);
+// }
+
 void TimeCount() {
-  if (millis() - time_work > 1000) {
-    time_work = millis();
+  if (millis() - testTm > 1000) {
+    testTm = millis();
     Sec++;
     Serial.println(Sec);
-    if (Sec >= 10) {
-      DisplaySleep("OFF");
-      flagPassTime = false;
-    }
-    //    if (Sec == 1) {
-    //      DisplaySleep("ON");
-    //    }
   }
 }
 
-void DisplaySleep(String state) {
-  if (state == "OFF") {
-    for (int i = MemorCountDisplayBRG; i >= 0; i = i - 1) {
-      analogWrite(12, i);
-    }
-  }
-  if (state == "ON") {
-    for (int i = 0; i <= MemorCountDisplayBRG; i = i + 1) {
-      analogWrite(12, i);
-    }
-  }
-}
 
-// void ICACHE_RAM_ATTR encoderISR()                                            //interrupt service routines need to be in ram
-// {
-//   encoder.readAB();
-// }
 
 //Помітки =============================================================================
 //Налаштування кординат інтерфейсу

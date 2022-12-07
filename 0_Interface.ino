@@ -1,35 +1,39 @@
 
 //Функція відповідальна за виведення на дислей "Menu"
-void MMenu () {
+void MMenu() {
   //Setting MMenu
   POSMIN = 0;
   POSMAX = 1;
   //===============
 
   if (flag == true) {
-    drawtext("|Color", ST77XX_WHITE, 30, 20);
-    drawtext("|Setting", ST77XX_WHITE, 30, 60);
-    drawPointerMas(newPos, MasMenu);
+    //drawtext("==============", ST77XX_WHITE, 30, 40);
+    drawtext("|  Color   |", ST77XX_WHITE, 50, 90);  // ( право, вниз )
+    drawtext("|  Setting |", ST77XX_WHITE, 50, 120);
+    //drawtext("==============", ST77XX_WHITE, 30, 170);
+    drawPointerMas(newPos, MasMenu, 70);
     flag = false;
   }
 
   if (PassFlag) {
     PassFlag = 0;
     switch (MasMenu[newPos]) {
-      case 20:
+      case 90:
         ClearMenu();
         settings.IdMenu = 1;
         flag = true;
         newPos = 0;
         encoder.setPosition(0);
         flagPassColorMode = true;
+        drawPointer(">", ST77XX_BLACK, 70, 90);
         break;
-      case 60:
+      case 120:
         ClearMenu();
-        flag == true;
+        flag = true;
         newPos = 0;
         encoder.setPosition(0);
         settings.IdMenu = 7;
+        drawPointer(">", ST77XX_BLACK, 70, 120);
         break;
       case 100:
         break;
@@ -38,7 +42,7 @@ void MMenu () {
 }
 
 //Функція відповідальна за виведення на дислей під меню "Color"
-void MColor () {
+void MColor() {
   //Setting MColor
   POSMIN = 0;
   //===============
@@ -96,7 +100,7 @@ void MColor () {
         if (MemorNameMode == "Effects") {
           settings.IdMenu = 3;
           flag = true;
-          drawPointer(">", ST77XX_BLACK, 0, 50);   //void drawPointer(char *text , uint16_t color,int x, int y)
+          drawPointer(">", ST77XX_BLACK, 0, 50);  //void drawPointer(char *text , uint16_t color,int x, int y)
           POSMAX = 39;
           encoder.setPosition(settings.IdColorEffects);
           //newPos = IdColorEffects;
@@ -104,7 +108,7 @@ void MColor () {
         if (MemorNameMode == "One color") {
           settings.IdMenu = 4;
           flag = true;
-          drawPointer(">", ST77XX_BLACK, 0, 50);   //void drawPointer(char *text , uint16_t color,int x, int y)
+          drawPointer(">", ST77XX_BLACK, 0, 50);  //void drawPointer(char *text , uint16_t color,int x, int y)
           POSMAX = 137;
           encoder.setPosition(settings.IdOneColor);
           //newPos = IdOneColor;
@@ -113,7 +117,7 @@ void MColor () {
       case 100:
         settings.IdMenu = 5;
         flag = true;
-        drawPointer(">", ST77XX_BLACK, 0, 100);   //void drawPointer(char *text , uint16_t color,int x, int y)
+        drawPointer(">", ST77XX_BLACK, 0, 100);  //void drawPointer(char *text , uint16_t color,int x, int y)
         POSMAX = 20;
         encoder.setPosition(settings.BRIGHTNESS / 5);
         //STEPS = 5;
@@ -121,21 +125,23 @@ void MColor () {
       case 140:
         settings.IdMenu = 6;
         flag = true;
-        drawPointer(">", ST77XX_BLACK, 0, 140);   //void drawPointer(char *text , uint16_t color,int x, int y)
+        drawPointer(">", ST77XX_BLACK, 0, 140);  //void drawPointer(char *text , uint16_t color,int x, int y)
         POSMAX = 20;
-        encoder.setPosition(settings.speedColorEffect / 5 ); //   /5
+        encoder.setPosition(settings.speedColorEffect / 5);  //   /5
         break;
       case 200:
         //tft.fillScreen(ST77XX_BLACK);
         ClearColorMenu();
         encoder.setPosition(0);
-        MasMenu[0] = 20;
-        MasMenu[1] = 60;
+        MasMenu[0] = 90;
+        MasMenu[1] = 120;
         MasMenu[2] = 100;
         newPos = 0;
         settings.IdMenu = 0;
         flag = true;
         SaveSettings();
+        drawPointer(">", ST77XX_WHITE, 70, 90);
+        drawPointer(">", ST77XX_BLACK, 0, 200);
         break;
     }
   }
@@ -149,7 +155,7 @@ void MColorMode() {
   //===============
   if (flag) {
     flag = false;
-    drawPointer("<", ST77XX_WHITE , 295 , 20);
+    drawPointer("<", ST77XX_WHITE, 295, 20);
 
     settings.IdColorMode = newPos;
     if (MemorNameMode != StrNameMode[settings.IdColorMode]) {
@@ -186,8 +192,8 @@ void MColorMode() {
 
   if (PassFlag) {
     encoder.setPosition(0);
-    drawPointer("<", ST77XX_BLACK , 295, 20);
-    drawPointer(">", ST77XX_WHITE , 0, 20);
+    drawPointer("<", ST77XX_BLACK, 295, 20);
+    drawPointer(">", ST77XX_WHITE, 0, 20);
     settings.IdMenu = 1;
     PassFlag = 0;
     flag = false;
@@ -203,7 +209,7 @@ void MColorModeEffects() {
   //===============
   if (flag) {
     flag = false;
-    drawPointer("<", ST77XX_WHITE , 295, 50);
+    drawPointer("<", ST77XX_WHITE, 295, 50);
     settings.IdColorEffects = newPos;
     if (MemorNameEffect != StrNameEffect[settings.IdColorEffects]) {
       drawtext(MemorNameEffect, ST77XX_BLACK, 40, 50);
@@ -214,8 +220,8 @@ void MColorModeEffects() {
 
   if (PassFlag) {
     encoder.setPosition(1);
-    drawPointer("<", ST77XX_BLACK , 295, 50);
-    drawPointer(">", ST77XX_WHITE , 0, 50);
+    drawPointer("<", ST77XX_BLACK, 295, 50);
+    drawPointer(">", ST77XX_WHITE, 0, 50);
     settings.IdMenu = 1;
     PassFlag = 0;
     flag = false;
@@ -231,7 +237,7 @@ void MColorModeOneColor() {
   //===============
   if (flag) {
     flag = false;
-    drawPointer("<", ST77XX_WHITE , 295, 50);
+    drawPointer("<", ST77XX_WHITE, 295, 50);
     settings.IdOneColor = newPos;
     if (MemorNameOneColor != StrNameOneColor[settings.IdOneColor]) {
       drawtext(MemorNameOneColor, ST77XX_BLACK, 40, 50);
@@ -242,8 +248,8 @@ void MColorModeOneColor() {
 
   if (PassFlag) {
     encoder.setPosition(1);
-    drawPointer("<", ST77XX_BLACK , 295, 50);
-    drawPointer(">", ST77XX_WHITE , 0, 50);
+    drawPointer("<", ST77XX_BLACK, 295, 50);
+    drawPointer(">", ST77XX_WHITE, 0, 50);
     settings.IdMenu = 1;
     PassFlag = 0;
     flag = false;
@@ -258,13 +264,13 @@ void MColorBrightness() {
   //===============
   if (flag) {
     flag = false;
-    drawPointer("<", ST77XX_WHITE , 295, 100);
+    drawPointer("<", ST77XX_WHITE, 295, 100);
 
     //    MemorBRIGHTNESS  //
     if (settings.BRIGHTNESS != newPos) {
       drawtext((String)settings.BRIGHTNESS, ST77XX_BLACK, 228, 100);
       settings.BRIGHTNESS = newPos;
-      settings.BRIGHTNESS = settings.BRIGHTNESS * 5; //STEPS 5
+      settings.BRIGHTNESS = settings.BRIGHTNESS * 5;  //STEPS 5
       drawtext((String)settings.BRIGHTNESS, ST77XX_WHITE, 228, 100);
       //MemorNameOneColor = StrNameOneColor[IdOneColor];
       MemorBRIGHTNESS = settings.BRIGHTNESS * 2.55;
@@ -275,8 +281,8 @@ void MColorBrightness() {
 
   if (PassFlag) {
     encoder.setPosition(2);
-    drawPointer("<", ST77XX_BLACK , 295, 100);
-    drawPointer(">", ST77XX_WHITE , 0, 100);
+    drawPointer("<", ST77XX_BLACK, 295, 100);
+    drawPointer(">", ST77XX_WHITE, 0, 100);
     settings.IdMenu = 1;
     PassFlag = 0;
     //STEPS = 1;
@@ -292,12 +298,12 @@ void SpeedColorEffect() {
   //===============
   if (flag) {
     flag = false;
-    drawPointer("<", ST77XX_WHITE , 295, 140);
+    drawPointer("<", ST77XX_WHITE, 295, 140);
 
     if (settings.speedColorEffect != newPos) {
       drawtext((String)settings.speedColorEffect, ST77XX_BLACK, 228, 140);
       settings.speedColorEffect = newPos;
-      settings.speedColorEffect = settings.speedColorEffect * 5; //STEPS 5
+      settings.speedColorEffect = settings.speedColorEffect * 5;  //STEPS 5
       MemorSpeedColorEffect = (100 - settings.speedColorEffect);
       drawtext((String)settings.speedColorEffect, ST77XX_WHITE, 228, 140);
       Serial.println(settings.speedColorEffect);
@@ -306,8 +312,8 @@ void SpeedColorEffect() {
 
   if (PassFlag) {
     encoder.setPosition(3);
-    drawPointer("<", ST77XX_BLACK , 295, 140);
-    drawPointer(">", ST77XX_WHITE , 0, 140);
+    drawPointer("<", ST77XX_BLACK, 295, 140);
+    drawPointer(">", ST77XX_WHITE, 0, 140);
     settings.IdMenu = 1;
     PassFlag = 0;
     flag = false;
@@ -318,12 +324,15 @@ void SpeedColorEffect() {
 void Settings() {
   //Setting Settings
   POSMIN = 0;
-  POSMAX = 1;
+  POSMAX = 4;
   //===============
 
   if (flag == true) {
     drawtext("DisplayBRG:" + (String)settings.CountDisplayBRG, ST77XX_WHITE, 30, 20);  // Яскравість дисплею
-
+    drawtext("Restart", ST77XX_WHITE, 30, 60);
+    drawtext("Factory reset", ST77XX_WHITE, 30, 100);
+    drawtext("Author", ST77XX_WHITE, 30, 140);
+    drawtext("_______________", ST77XX_WHITE, 30, 165);
     drawtext("Back", ST77XX_WHITE, 30, 200);
     drawPointerMas(newPos, MasSettings);
     flag = false;
@@ -335,9 +344,22 @@ void Settings() {
       case 20:
         settings.IdMenu = 8;
         flag = true;
-        drawPointer(">", ST77XX_BLACK, 0, 20);   //void drawPointer(char *text , uint16_t color,int x, int y)
+        drawPointer(">", ST77XX_BLACK, 0, 20);  //void drawPointer(char *text , uint16_t color,int x, int y)
         POSMAX = 10;
         encoder.setPosition(settings.CountDisplayBRG / 10);
+        break;
+      case 60:
+        Restart();
+        break;
+      case 100:
+
+        break;
+      case 140:
+        ClearSettings();
+        drawPointer(">", ST77XX_BLACK, 0, 140);
+        settings.IdMenu = 9;
+        flag = true;
+        POSMAX = 0;
         break;
       case 200:
         ClearSettings();
@@ -345,10 +367,12 @@ void Settings() {
         flag = true;
         newPos = 1;
         encoder.setPosition(1);
+        drawPointer(">", ST77XX_BLACK, 0, 200);
         break;
     }
   }
 }
+
 
 void DisplayBRG() {
   //Setting DisplayBRG
@@ -357,7 +381,7 @@ void DisplayBRG() {
   //===============
   if (flag) {
     flag = false;
-    drawPointer("<", ST77XX_WHITE , 295, 20);
+    drawPointer("<", ST77XX_WHITE, 295, 20);
 
     if (settings.CountDisplayBRG != newPos) {
       drawtext((String)settings.CountDisplayBRG, ST77XX_BLACK, 228, 20);
@@ -373,8 +397,8 @@ void DisplayBRG() {
   if (PassFlag) {
     POSMIN = 0;
     encoder.setPosition(0);
-    drawPointer("<", ST77XX_BLACK , 295, 20);
-    drawPointer(">", ST77XX_WHITE , 0, 20);
+    drawPointer("<", ST77XX_BLACK, 295, 20);
+    drawPointer(">", ST77XX_WHITE, 0, 20);
     settings.IdMenu = 7;
     PassFlag = 0;
     flag = false;
@@ -382,14 +406,79 @@ void DisplayBRG() {
   }
 }
 
+void AutohorMenu() {
+  //Setting AutohorMenu
+  POSMIN = 0;
+  POSMAX = 0;
+  //===============
+  if (flag) {
+    flag = false;
+    drawPointer("<", ST77XX_WHITE, 60, 200, 2);
+    drawtext("Project name:", ST77XX_WHITE, 10, 20, 2);
+    drawtext("Cooler ARGB lighting", ST77XX_WHITE, 10, 40, 2);
+    drawtext("controller |-v 1.0|", ST77XX_WHITE, 10, 60, 2);
+    drawtext("Author: Shchyryy Vitaliy", ST77XX_WHITE, 10, 80, 2);
+    drawtext("GitHub https://github.com /Shchyryy", ST77XX_WHITE, 10, 120, 2);
+    drawtext("Back", ST77XX_WHITE, 10, 200, 2);
+  }
+  if (PassFlag) {
+    POSMIN = 0;
+    encoder.setPosition(0);
+    drawPointer("<", ST77XX_BLACK, 60, 200);
+    drawPointer(">", ST77XX_WHITE, 0, 20);
+    settings.IdMenu = 7;
+    PassFlag = 0;
+    flag = false;
+    //SaveSettings();
+    CleanAuthor();
+  }
+}
+
+//   if(newPos == 0){
+    //     drawtext("\\click to restart", ST77XX_BLACK, 120, 200, 2);
+    //   }
+    //   else if(newPos == 1) {
+    //     drawtext("\\click to", ST77XX_BLACK, 130, 195, 2);
+    //     drawtext(" \\Factory reset", ST77XX_BLACK, 130, 215, 2);
+    //     drawtext("\\click to restart", ST77XX_WHITE, 120, 200, 2);
+    //   }
+    //   else if(newPos == 2){
+    //     drawtext("\\click to restart", ST77XX_BLACK, 120, 200, 2);
+    //     drawtext("\\click to", ST77XX_WHITE, 130, 195, 2);
+    //     drawtext(" \\Factory reset", ST77XX_WHITE, 130, 215, 2);
+    //   }
+    //   else{
+    //     drawtext("\\click to", ST77XX_BLACK, 130, 195, 2);
+    //     drawtext(" \\Factory reset", ST77XX_BLACK, 130, 215, 2);
+    //   }
+    // }
+
+void Restart() {
+  ESP.restart();
+}
+
 void ClearMenu() {
-  drawtext("|Color", ST77XX_BLACK, 30, 20);
-  drawtext("|Setting", ST77XX_BLACK, 30, 60);
+  drawtext("|  Color   |", ST77XX_BLACK, 50, 90);
+  drawtext("|  Setting |", ST77XX_BLACK, 50, 120);
 }
 
 void ClearSettings() {
-  drawtext("DisplayBRG:" + (String)settings.CountDisplayBRG, ST77XX_BLACK, 30, 20);
-  drawtext("Back", ST77XX_BLACK, 30, 200);
+    drawtext("DisplayBRG:" + (String)settings.CountDisplayBRG, ST77XX_BLACK, 30, 20);  // Яскравість дисплею
+    drawtext("Restart", ST77XX_BLACK, 30, 60);
+    drawtext("Factory reset", ST77XX_BLACK, 30, 100);
+    drawtext("Author", ST77XX_BLACK, 30, 140);
+    drawtext("_______________", ST77XX_BLACK, 30, 165);
+    drawtext("Back", ST77XX_BLACK, 30, 200);
+    //drawPointerMas(newPos, MasSettings);
+}
+
+void CleanAuthor(){
+    drawtext("Project name:", ST77XX_BLACK, 10, 20, 2);
+    drawtext("Cooler ARGB lighting", ST77XX_BLACK, 10, 40, 2);
+    drawtext("controller |-v 1.0|", ST77XX_BLACK, 10, 60, 2);
+    drawtext("Author: Shchyryy Vitaliy", ST77XX_BLACK, 10, 80, 2);
+    drawtext("GitHub https://github.com /Shchyryy", ST77XX_BLACK, 10, 120, 2);
+    drawtext("Back", ST77XX_BLACK, 10, 200, 2);
 }
 
 void ClearColorMenu() {
