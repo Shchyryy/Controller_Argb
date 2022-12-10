@@ -60,7 +60,7 @@ unsigned long testTm;
 
 unsigned long ee_time;
 boolean ee_request = false;
-byte Size_EEPROM = 6;
+byte Size_EEPROM = 10;  // змінив, було 6
 
 int Sec;
 
@@ -72,6 +72,7 @@ struct {
   byte BRIGHTNESS = 80;
   byte speedColorEffect = 80;
   byte CountDisplayBRG = 100;
+  byte CountTimeSleepDisplay = 0;
 } settings;
 
 uint8_t MasMenu[] = { 90, 120, 100 };  //20/60/100/140/180|  Масив відповідальний за положення вказівника, та за переміщення по меню
@@ -116,8 +117,10 @@ int testHex[] = { 0xFFFFFF, 0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0x00FFFF, 0x
 
 char* MemorNameOneColor = StrNameOneColor[settings.IdOneColor];
 
-uint8_t MasSettings[] = { 20, 60, 100, 140, 200 };
+uint8_t MasSettings[] = { 20, 55, 90, 125, 200 };
 
+char* TimeSleepDisplay[] = { "Off", "15c", "30c", "1m", "2m", "5m", "10m" };
+int timeSleep = 0;
 float MemorBRIGHTNESS = 0;
 
 byte MemorSpeedColorEffect;
@@ -132,6 +135,7 @@ int i = 0;
 
 // ================== SETUP ==================
 void setup() {
+  //delay(2000);
   Serial.begin(115200);
   pinMode(BtnEnc, INPUT_PULLUP);
   pinMode(LedDisplay, OUTPUT);
@@ -146,9 +150,20 @@ void setup() {
   FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   flagPassColorMode = true;
 
-  //  EEPROM.begin(Size_EEPROM); здається для скидання попередніх налаштувань
-  //  EEPROM.get(1, settings);
-  //  EEPROM.end();
+  // if (EEPROM.read(0) != "n") {
+  //   //EEPROM.begin(Size_EEPROM);
+  //   EEPROM.put(1, settings);
+  //   EPPROM.write(0, "n");
+  //   EEPROM.end();
+  // }
+  // else {
+  //EEPROM.begin(Size_EEPROM);
+  // }
+
+  EEPROM.begin(Size_EEPROM);
+  EEPROM.get(1, settings);
+  EEPROM.end();
+
   MemorSpeedColorEffect = 100 - settings.speedColorEffect;
   MemorBRIGHTNESS = settings.BRIGHTNESS * 2.55;
   MemorCountDisplayBRG = settings.CountDisplayBRG * 2.55;
@@ -170,15 +185,15 @@ void setup() {
 void loop() {
 
   //Serial.println(encoder.getPosition());
-  // TimeCount();
-  // SleepDisplay();
+  TimeCount();
+  SleepDisplay();
 
-  if (ee_request && millis() - ee_time > 3000) {
-    // ee_request = false;
-    //    EEPROM.begin(Size_EEPROM);
-    //    EEPROM.put(1, settings);
-    //    EEPROM.end();
-    //    Serial.println("Save_settings");
+  if (ee_request && millis() - ee_time > 10000) {
+    ee_request = false;
+    EEPROM.begin(Size_EEPROM);
+    EEPROM.put(1, settings);
+    EEPROM.end();
+    Serial.println("Save_settings");
   }
 
   EncoderRead();  //Функція зчитування положення енкодера та стан його кнопки
@@ -216,12 +231,19 @@ void loop() {
     case 9:
       AutohorMenu();
       break;
+    case 10:
+      SleepDispMenu();
+      break;
+    case 11:
+      FactoryResetMenu();
   }
 
   if (settings.IdColorMode == 0) {
     FastLED.clear();
     FastLED.show();
   }
+
+  //Serial.println(newPos);
 
   //Виведення світлових ефектів. Зроблена спільна затримка, яка відповідаю за швидкість відтворення ефектів
   if (settings.IdColorMode == 2 && millis() - last_time > MemorSpeedColorEffect) {
@@ -410,32 +432,28 @@ void drawPointer(char* text, uint16_t color, int x, int y, byte size = SizeText)
 }
 
 //Функція зчитування положення енкодера та стан його кнопки
-// int n;
-// int m;
+int n;
+int m = MemorCountDisplayBRG;
 void EncoderRead() {
-  //  r.loop();
-  //  newPos = r.getPosition();
   encoder.tick();
   newPos = encoder.getPosition();  //призначення теперешнього положення енкодера до зміної
-  //n = Sec;
-  //millis() - testTm > 1000
 
   //Обмеження для показника положення енкодера, POSMIN - мінімальне | POSMAX - максимальне положення
   if (newPos < POSMIN) {
-    encoder.setPosition(POSMIN / STEPS);
     newPos = POSMIN;
-    //UnSleepDisplay();
+    encoder.setPosition(POSMIN);
+    UnSleepDisplay();
   } else if (newPos > POSMAX) {
-    encoder.setPosition(POSMAX / STEPS);
     newPos = POSMAX;
-    //UnSleepDisplay();
+    encoder.setPosition(POSMAX);
+    UnSleepDisplay();
   }
   //Виведення позиції енкодера в serial port
   if (lastPos != newPos) {
-    //Serial.println(newPos);
-    //UnSleepDisplay();
+    //Serial.println(encoder.getPosition(););
+    UnSleepDisplay();
     lastPos = newPos;
-    flagPassTime = true;
+    //flagPassTime = true;
     flag = true;  //Виконує роль шлюзу у фунції виведення інтерфейсів,
     //при перемиканні енкодера виконуються відкриття шлюзу, що забеспечує
     //однаразове оновлення інформації на дисплеї
@@ -447,7 +465,7 @@ void EncoderRead() {
   if (btn == 1 && btnFlag == 0) {
     btnFlag = 1;
     Serial.println("Click");
-    //UnSleepDisplay();
+    UnSleepDisplay();
   }
   if (btn == 0 && btnFlag == 1) {
     btnFlag = 0;
@@ -464,27 +482,28 @@ void SaveSettings() {
   //Serial.println("ok");
 }
 
-// void SleepDisplay() {    на кращі часи
-//   if (Sec - n >= 10) {
-//     if (MemorCountDisplayBRG > 0) {
-//       MemorCountDisplayBRG--;
-//       analogWrite(LedDisplay, MemorCountDisplayBRG);
-//       Serial.println(MemorCountDisplayBRG);
-//     }
-//   }
-// }
+void SleepDisplay() {
+  //Serial.println(Sec - n);
+  if (timeSleep != 0 && Sec - n >= timeSleep) {
+    if (m > 0) {
+      m--;
+      analogWrite(LedDisplay, m);
+      //Serial.println(m);
+    }
+  }
+}
 
-// void UnSleepDisplay() {   конфліктує із налаштуванням яскравості
-//   n = Sec;
-//   MemorCountDisplayBRG = ;
-//   analogWrite(LedDisplay, MemorCountDisplayBRG);
-// }
+void UnSleepDisplay() {  //конфліктує із налаштуванням яскравості
+  n = Sec;
+  m = MemorCountDisplayBRG;
+  analogWrite(LedDisplay, m);
+}
 
 void TimeCount() {
   if (millis() - testTm > 1000) {
     testTm = millis();
     Sec++;
-    Serial.println(Sec);
+    //Serial.println(Sec);
   }
 }
 

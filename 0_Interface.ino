@@ -188,6 +188,7 @@ void MColorMode() {
         //drawtext("Speed work:" + (String)speedColorEffect, ST77XX_BLACK, 30, 140);
       }
     }
+    SaveSettings();
   }
 
   if (PassFlag) {
@@ -215,6 +216,7 @@ void MColorModeEffects() {
       drawtext(MemorNameEffect, ST77XX_BLACK, 40, 50);
       drawtext(StrNameEffect[settings.IdColorEffects], ST77XX_WHITE, 40, 50);
       MemorNameEffect = StrNameEffect[settings.IdColorEffects];
+      SaveSettings();
     }
   }
 
@@ -243,6 +245,7 @@ void MColorModeOneColor() {
       drawtext(MemorNameOneColor, ST77XX_BLACK, 40, 50);
       drawtext(StrNameOneColor[settings.IdOneColor], ST77XX_WHITE, 40, 50);
       MemorNameOneColor = StrNameOneColor[settings.IdOneColor];
+      SaveSettings();
     }
   }
 
@@ -276,6 +279,7 @@ void MColorBrightness() {
       MemorBRIGHTNESS = settings.BRIGHTNESS * 2.55;
       FastLED.setBrightness(MemorBRIGHTNESS);
       Serial.println(MemorBRIGHTNESS);
+      SaveSettings();
     }
   }
 
@@ -307,6 +311,7 @@ void SpeedColorEffect() {
       MemorSpeedColorEffect = (100 - settings.speedColorEffect);
       drawtext((String)settings.speedColorEffect, ST77XX_WHITE, 228, 140);
       Serial.println(settings.speedColorEffect);
+      SaveSettings();
     }
   }
 
@@ -329,9 +334,10 @@ void Settings() {
 
   if (flag == true) {
     drawtext("DisplayBRG:" + (String)settings.CountDisplayBRG, ST77XX_WHITE, 30, 20);  // Яскравість дисплею
-    drawtext("Restart", ST77XX_WHITE, 30, 60);
-    drawtext("Factory reset", ST77XX_WHITE, 30, 100);
-    drawtext("Author", ST77XX_WHITE, 30, 140);
+    drawtext("TSleepDisp:" + (String)TimeSleepDisplay[settings.CountTimeSleepDisplay], ST77XX_WHITE, 30, 55);
+    //drawtext(TimeSleepDisplay[settings.CountTimeSleepDisplay], ST77XX_WHITE, 228, 60);
+    drawtext("Factory reset", ST77XX_WHITE, 30, 90);
+    drawtext("Author", ST77XX_WHITE, 30, 125);
     drawtext("_______________", ST77XX_WHITE, 30, 165);
     drawtext("Back", ST77XX_WHITE, 30, 200);
     drawPointerMas(newPos, MasSettings);
@@ -348,15 +354,27 @@ void Settings() {
         POSMAX = 10;
         encoder.setPosition(settings.CountDisplayBRG / 10);
         break;
-      case 60:
-        Restart();
+      case 55:
+        settings.IdMenu = 10;
+        flag = true;
+        drawPointer(">", ST77XX_BLACK, 0, 55);  //void drawPointer(char *text , uint16_t color,int x, int y)
+        POSMAX = 6;
+        encoder.setPosition(settings.CountTimeSleepDisplay);
+        newPos = settings.CountTimeSleepDisplay;
         break;
-      case 100:
-
-        break;
-      case 140:
+      case 90:
+        //Restart();
         ClearSettings();
-        drawPointer(">", ST77XX_BLACK, 0, 140);
+        drawPointer(">", ST77XX_BLACK, 0, 90);
+        settings.IdMenu = 11;
+        flag = true;
+        POSMAX = 0;
+        encoder.setPosition(0);
+        newPos = 0;
+        break;
+      case 125:
+        ClearSettings();
+        drawPointer(">", ST77XX_BLACK, 0, 125);
         settings.IdMenu = 9;
         flag = true;
         POSMAX = 0;
@@ -389,8 +407,10 @@ void DisplayBRG() {
       settings.CountDisplayBRG = settings.CountDisplayBRG * 10;
       drawtext((String)settings.CountDisplayBRG, ST77XX_WHITE, 228, 20);
       MemorCountDisplayBRG = settings.CountDisplayBRG * 2.55;
+      m = MemorCountDisplayBRG;
       analogWrite(LedDisplay, MemorCountDisplayBRG);
       Serial.println(MemorCountDisplayBRG);
+      SaveSettings();
     }
   }
 
@@ -422,36 +442,143 @@ void AutohorMenu() {
     drawtext("Back", ST77XX_WHITE, 10, 200, 2);
   }
   if (PassFlag) {
-    POSMIN = 0;
-    encoder.setPosition(0);
-    drawPointer("<", ST77XX_BLACK, 60, 200);
-    drawPointer(">", ST77XX_WHITE, 0, 20);
+    CleanAuthor();
+    POSMAX = 4;          //якщо не працює переназначення курсора, потрібно зміннити PosMax до значення, яке містить меню, до якого повертаються
+    newPos = 3;
+    encoder.setPosition(3);
+    drawPointer("<", ST77XX_BLACK, 60, 200, 2);
     settings.IdMenu = 7;
     PassFlag = 0;
-    flag = false;
-    //SaveSettings();
-    CleanAuthor();
+    flag = true;
   }
 }
 
+void SleepDispMenu() {
+  //Setting SleepDispMenu
+  POSMIN = 0;
+  POSMAX = 6;
+  //===============
+  if (flag) {
+    flag = false;
+    drawPointer("<", ST77XX_WHITE, 295, 55);
+
+    if (settings.CountTimeSleepDisplay != newPos) {
+      drawtext(TimeSleepDisplay[settings.CountTimeSleepDisplay], ST77XX_BLACK, 228, 55);
+      settings.CountTimeSleepDisplay = newPos;
+      drawtext(TimeSleepDisplay[settings.CountTimeSleepDisplay], ST77XX_WHITE, 228, 55);
+      switch (settings.CountTimeSleepDisplay) {
+        case 0:
+          timeSleep = 0;  //Off
+          break;
+        case 1:
+          timeSleep = 15;
+          break;
+        case 2:
+          timeSleep = 30;
+          break;
+        case 3:
+          timeSleep = 60;
+          break;
+        case 4:
+          timeSleep = 120;
+          break;
+        case 5:
+          timeSleep = 300;
+          break;
+        case 6:
+          timeSleep = 600;
+          break;
+      }
+      // Serial.println(timeSleep);
+      // Serial.println(newPos);
+      SaveSettings();
+    }
+  }
+  if (PassFlag) {
+    POSMIN = 0;
+    newPos = 1;
+    encoder.setPosition(1);
+    drawPointer("<", ST77XX_BLACK, 295, 55);
+    drawPointer(">", ST77XX_WHITE, 0, 55);
+    settings.IdMenu = 7;
+    PassFlag = 0;
+    flag = true;
+    SaveSettings();
+  }
+}
+
+void FactoryResetMenu() {
+  //Setting FactoryResetMenu
+  POSMIN = 0;
+  POSMAX = 1;
+  //===============
+  if (flag) {
+    flag = false;
+    if (newPos == 1) {
+      drawPointer("<", ST77XX_BLACK, 220, 140, 2);
+      drawPointer("<", ST77XX_WHITE, 133, 140, 2);
+    } else {
+      drawPointer("<", ST77XX_BLACK, 133, 140, 2);
+      drawPointer("<", ST77XX_WHITE, 220, 140, 2);
+    }
+    drawtext("|   Reset the device   |", ST77XX_WHITE, 15, 70, 2);
+    drawtext("| to factory settings? |", ST77XX_WHITE, 15, 100, 2);
+    drawtext("Yes", ST77XX_GREEN, 90, 140, 2);
+    drawtext("No", ST77XX_RED, 190, 140, 2);
+  }
+  if (PassFlag) {
+    switch (newPos) {
+      case 1:
+        ClearFactoryResetMenu();
+        settings.IdMenu = 0;
+        settings.IdColorMode = 0;
+        settings.IdColorEffects = 0;
+        settings.IdOneColor = 0;
+        settings.BRIGHTNESS = 80;
+        settings.speedColorEffect = 80;
+        settings.CountDisplayBRG = 100;
+        settings.CountTimeSleepDisplay = 0;
+        EEPROM.begin(Size_EEPROM);
+        EEPROM.put(1, settings);
+        EEPROM.end();
+        ESP.restart();
+        break;
+      case 0:
+        POSMIN = 0;
+        POSMAX = 4;
+        ClearFactoryResetMenu();
+        newPos = 2;
+        encoder.setPosition(2);
+        drawPointer(">", ST77XX_WHITE, 0, 90);
+        settings.IdMenu = 7;
+        PassFlag = 0;
+        flag = true;
+        break;
+    }
+  }
+}
+
+
+
+
 //   if(newPos == 0){
-    //     drawtext("\\click to restart", ST77XX_BLACK, 120, 200, 2);
-    //   }
-    //   else if(newPos == 1) {
-    //     drawtext("\\click to", ST77XX_BLACK, 130, 195, 2);
-    //     drawtext(" \\Factory reset", ST77XX_BLACK, 130, 215, 2);
-    //     drawtext("\\click to restart", ST77XX_WHITE, 120, 200, 2);
-    //   }
-    //   else if(newPos == 2){
-    //     drawtext("\\click to restart", ST77XX_BLACK, 120, 200, 2);
-    //     drawtext("\\click to", ST77XX_WHITE, 130, 195, 2);
-    //     drawtext(" \\Factory reset", ST77XX_WHITE, 130, 215, 2);
-    //   }
-    //   else{
-    //     drawtext("\\click to", ST77XX_BLACK, 130, 195, 2);
-    //     drawtext(" \\Factory reset", ST77XX_BLACK, 130, 215, 2);
-    //   }
-    // }
+//     drawtext("\\click to restart", ST77XX_BLACK, 120, 200, 2);
+//   }
+//   else if(newPos == 1) {
+//     drawtext("\\click to", ST77XX_BLACK, 130, 195, 2);
+//     drawtext(" \\Factory reset", ST77XX_BLACK, 130, 215, 2);
+//     drawtext("\\click to restart", ST77XX_WHITE, 120, 200, 2);
+//   }
+//   else if(newPos == 2){
+//     drawtext("\\click to restart", ST77XX_BLACK, 120, 200, 2);
+//     drawtext("\\click to", ST77XX_WHITE, 130, 195, 2);
+//     drawtext(" \\Factory reset", ST77XX_WHITE, 130, 215, 2);
+//   }
+//   else{
+//     drawtext("\\click to", ST77XX_BLACK, 130, 195, 2);
+//     drawtext(" \\Factory reset", ST77XX_BLACK, 130, 215, 2);
+//   }
+// }
 
 void Restart() {
   ESP.restart();
@@ -463,22 +590,23 @@ void ClearMenu() {
 }
 
 void ClearSettings() {
-    drawtext("DisplayBRG:" + (String)settings.CountDisplayBRG, ST77XX_BLACK, 30, 20);  // Яскравість дисплею
-    drawtext("Restart", ST77XX_BLACK, 30, 60);
-    drawtext("Factory reset", ST77XX_BLACK, 30, 100);
-    drawtext("Author", ST77XX_BLACK, 30, 140);
-    drawtext("_______________", ST77XX_BLACK, 30, 165);
-    drawtext("Back", ST77XX_BLACK, 30, 200);
-    //drawPointerMas(newPos, MasSettings);
+  drawtext("DisplayBRG:" + (String)settings.CountDisplayBRG, ST77XX_BLACK, 30, 20);  // Яскравість дисплею
+  //drawtext("Restart", ST77XX_BLACK, 30, 60);
+  drawtext("TSleepDisp:" + (String)TimeSleepDisplay[settings.CountTimeSleepDisplay], ST77XX_BLACK, 30, 55);
+  drawtext("Factory reset", ST77XX_BLACK, 30, 90);
+  drawtext("Author", ST77XX_BLACK, 30, 125);
+  drawtext("_______________", ST77XX_BLACK, 30, 165);
+  drawtext("Back", ST77XX_BLACK, 30, 200);
+  //drawPointerMas(newPos, MasSettings);
 }
 
-void CleanAuthor(){
-    drawtext("Project name:", ST77XX_BLACK, 10, 20, 2);
-    drawtext("Cooler ARGB lighting", ST77XX_BLACK, 10, 40, 2);
-    drawtext("controller |-v 1.0|", ST77XX_BLACK, 10, 60, 2);
-    drawtext("Author: Shchyryy Vitaliy", ST77XX_BLACK, 10, 80, 2);
-    drawtext("GitHub https://github.com /Shchyryy", ST77XX_BLACK, 10, 120, 2);
-    drawtext("Back", ST77XX_BLACK, 10, 200, 2);
+void CleanAuthor() {
+  drawtext("Project name:", ST77XX_BLACK, 10, 20, 2);
+  drawtext("Cooler ARGB lighting", ST77XX_BLACK, 10, 40, 2);
+  drawtext("controller |-v 1.0|", ST77XX_BLACK, 10, 60, 2);
+  drawtext("Author: Shchyryy Vitaliy", ST77XX_BLACK, 10, 80, 2);
+  drawtext("GitHub https://github.com /Shchyryy", ST77XX_BLACK, 10, 120, 2);
+  drawtext("Back", ST77XX_BLACK, 10, 200, 2);
 }
 
 void ClearColorMenu() {
@@ -491,4 +619,13 @@ void ClearColorMenu() {
   drawtext("Brightness:" + (String)settings.BRIGHTNESS, ST77XX_BLACK, 30, 100);
   drawtext("Speed work:" + (String)settings.speedColorEffect, ST77XX_BLACK, 30, 140);
   drawtext("Back", ST77XX_BLACK, 30, 200);
+}
+
+void ClearFactoryResetMenu() {
+  drawPointer("<", ST77XX_BLACK, 220, 140, 2);
+  drawPointer("<", ST77XX_BLACK, 133, 140, 2);
+  drawtext("|   Reset the device   |", ST77XX_BLACK, 15, 70, 2);
+  drawtext("| to factory settings? |", ST77XX_BLACK, 15, 100, 2);
+  drawtext("Yes", ST77XX_BLACK, 90, 140, 2);
+  drawtext("No", ST77XX_BLACK, 190, 140, 2);
 }
